@@ -204,11 +204,12 @@ class GeneticAlgorithm:
         indpb: float,
         random_state: Optional[Union[np.random.RandomState, int]] = None,
     ) -> Tuple:
-        """Flip the value of the attributes of the input individual and return the
-        mutant. The *individual* is expected to be a :term:`sequence` and the values of the
-        attributes shall stay valid after the ``not`` operator is called on them.
-        The *indpb* argument is the probability of each attribute to be
-        flipped. This mutation is usually applied on boolean individuals.
+        """Flip the value of the attributes of the input individual and return
+        the mutant. The *individual* is expected to be a :term:`sequence` and
+        the values of the attributes shall stay valid after the ``not``
+        operator is called on them. The *indpb* argument is the probability of
+        each attribute to be flipped.
+        This mutation is usually applied on boolean individuals.
 
 
         Parameters
