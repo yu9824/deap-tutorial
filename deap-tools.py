@@ -130,17 +130,21 @@ class GeneticAlgorithm:
 
             for mutant in offspring:
                 if self.rng_.random() < mutpb:
+                    # オブジェクトをそのまま変えている
                     toolbox.mutate(mutant)
                     del mutant.fitness.values
 
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            # del してたものを再度評価し直す（突然変異or交叉をしているため）
             fitnesses = map(toolbox.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
 
+            # populationを更新
             pop[:] = offspring
             # fits = [ind.fitness.values[0] for ind in pop]
 
+        # 最も良い適用度の個体を取得
         self.best_ind = tools.selBest(pop, 1)[0]
         return self
 
@@ -287,3 +291,4 @@ if __name__ == "__main__":
         ga.optimize(objective, vmins=[-1, -1, -1], vmaxs=[1, 1, 1])
 
     Parallel(n_jobs=-1)([delayed(recursive)(i) for i in range(10)])
+    # recursive(1)
