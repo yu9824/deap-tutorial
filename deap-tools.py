@@ -49,7 +49,6 @@ class GeneticAlgorithm:
         objective: Callable[[np.ndarray], Tuple[float]],
         vmins,
         vmaxs,
-        i_iter: int = 0,
         n_gen: int = 100,
         popsize: int = 100,
         cxpb: float = 0.5,
@@ -117,6 +116,8 @@ class GeneticAlgorithm:
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
 
+        self.histories_ = []
+        self._cols_histories = ["best_fitness", "best_ind"]
         for i_generation in self._range(n_gen):
             offspring = toolbox.select(pop, popsize)
             offspring = list(map(toolbox.clone, offspring))
