@@ -1,6 +1,7 @@
 from typing import Optional, Union, Literal, Callable, Tuple, List, Generator
 from copy import deepcopy
 from operator import attrgetter
+from datetime import datetime
 
 import numpy as np
 from sklearn.utils import check_array, check_random_state
@@ -94,7 +95,13 @@ class GeneticAlgorithm:
         for ind, fit in zip(population, _fitnesses):
             ind.fitness = fit
 
-        for i_generation in self._range(n_gen):
+        self.__populations: List[List[Individual]] = []
+        self.__fitnesses: List[List[float]] = []
+        self.__time: List[Tuple[datetime, datetime]] = []
+        for _ in self._range(n_gen):
+            self.__populations.append(population)
+            _time_start = datetime.now()
+
             offspring = self.selTournament(
                 individuals=population, k=popsize, tournsize=3
             )
@@ -120,14 +127,36 @@ class GeneticAlgorithm:
 
             # populationを更新
             population[:] = offspring
-            # fits = [ind.fitness.values[0] for ind in pop]
+            fitnesses = [ind.fitness[0] for ind in population]
+            self.__fitnesses.append(fitnesses)
             # 保存するならば、各世代のpopulationとfitness。
+
+            _time_end = datetime.now()
+            self.__time.append((_time_start, _time_end))
 
         # 最も良い適用度の個体を取得
         self.best_ind = sorted(
             population, key=attrgetter("fitness"), reverse=True
         )[0]
         return self
+
+    @property
+    def populations(self):
+        return self.__populations
+
+    @property
+    def fitnesses(self):
+        return self.__fitnesses
+
+    @property
+    def time(self):
+        return self.__time
+
+    @populations.setter
+    @fitnesses.setter
+    @time.setter
+    def _setter(self, value):
+        raise AttributeError("can't set attribute")
 
     @staticmethod
     def create_ind_uniform(

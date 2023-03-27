@@ -1,6 +1,7 @@
 from typing import Optional, Union, Literal, Callable, Tuple, List
 import warnings
 from operator import attrgetter
+from datetime import datetime
 
 import numpy as np
 from sklearn.utils import check_array, check_random_state
@@ -116,9 +117,13 @@ class GeneticAlgorithm:
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
 
-        self.histories_ = []
-        self._cols_histories = ["best_fitness", "best_ind"]
-        for i_generation in self._range(n_gen):
+        self.__populations: List[List] = []
+        self.__fitnesses: List[List[float]] = []
+        self.__time: List[Tuple[datetime, datetime]] = []
+        for _ in self._range(n_gen):
+            self.__populations.append(pop)
+            _time_start = datetime.now()
+
             offspring = toolbox.select(pop, popsize)
             offspring = list(map(toolbox.clone, offspring))
             # 偶数と奇数のペアで、一定の確率で交配
@@ -142,11 +147,33 @@ class GeneticAlgorithm:
 
             # populationを更新
             pop[:] = offspring
-            # fits = [ind.fitness.values[0] for ind in pop]
+            fits = [ind.fitness.values[0] for ind in pop]
+            self.__fitnesses.append(fits)
+
+            _time_end = datetime.now()
+            self.__time.append((_time_start, _time_end))
 
         # 最も良い適用度の個体を取得
         self.best_ind = tools.selBest(pop, 1)[0]
         return self
+
+    @property
+    def populations(self):
+        return self.__populations
+
+    @property
+    def fitnesses(self):
+        return self.__fitnesses
+
+    @property
+    def time(self):
+        return self.__time
+
+    @populations.setter
+    @fitnesses.setter
+    @time.setter
+    def _setter(self, value):
+        raise AttributeError("can't set attribute")
 
     @staticmethod
     def create_ind_uniform(
@@ -190,7 +217,7 @@ class GeneticAlgorithm:
 
         size = min(len(ind1), len(ind2))
         cxpoint1 = rng_.randint(1, size)
-        cxpoint2 = rng_.randint(1, size - 1)
+        cxpoint2 = rng_.randint(1, size - 1) if size - 1 > 1 else 1
         if cxpoint2 >= cxpoint1:
             cxpoint2 += 1
         else:  # Swap the two cx points
