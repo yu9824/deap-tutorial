@@ -65,7 +65,7 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
             self._n_trials_completed % self.popsize == 0
             and self._n_trials_completed > 0
         ):
-            trials_parent = self._trials_completed[-self.popsize:]
+            trials_parent = self._trials_completed[-self.popsize :]
 
             # select (tournament selection)
             tournsize = 3
@@ -167,7 +167,7 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
                     {
                         _trial.value
                         for _trial in study.sampler._trials_completed[
-                            -study.sampler.popsize:
+                            -study.sampler.popsize :
                         ]
                     }
                 )
@@ -188,7 +188,15 @@ if __name__ == "__main__":
     sampler = GeneticAlgorithmSampler(
         seed=334, n_gen=n_gen, popsize=popsize, cxpb=0.5, mutpb=0.2
     )
-    study = optuna.create_study(sampler=sampler, direction="minimize")
-    study.optimize(
+    study_ga = optuna.create_study(sampler=sampler, direction="minimize")
+    study_ga.optimize(
         objective, n_trials=n_gen * popsize, callbacks=[sampler.early_stop]
     )
+
+    study_tpe = optuna.create_study(
+        sampler=optuna.samplers.TPESampler(seed=334), direction="minimize"
+    )
+    study_tpe.optimize(objective, n_trials=100)
+
+    print(study_ga.best_params, study_ga.best_value)
+    print(study_tpe.best_params, study_tpe.best_value)
