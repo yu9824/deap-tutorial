@@ -65,7 +65,7 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
             self._n_trials_completed % self.popsize == 0
             and self._n_trials_completed > 0
         ):
-            trials_parent = self._trials_completed[-self.popsize :]
+            trials_parent = self._trials_completed[-self.popsize:]
 
             # select (tournament selection)
             tournsize = 3
@@ -76,9 +76,15 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
                     self._offspring.append(
                         max(aspirants, key=attrgetter("value"))
                     )
-                else:
+                elif study.direction == optuna.study.StudyDirection.MINIMIZE:
                     self._offspring.append(
                         min(aspirants, key=attrgetter("value"))
+                    )
+                else:
+                    raise ValueError(
+                        "StudyDirection {} is not supported.".format(
+                            study.direction
+                        )
                     )
 
             # FIXME: paramsだけ先に取り出す？→同じものであったとしても再計算したほうがわかりやすそう。
@@ -161,22 +167,6 @@ def objective(trial: optuna.trial.Trial) -> float:
 
 
 if __name__ == "__main__":
-    #     sampler = GeneticAlgorithmSampler()
-    #     study = optuna.create_study(sampler=sampler)
-    #     study.optimize(objective, n_trials=100)
-
-    #     print(study.best_params)
-
-    # def objective(x):
-    #     return (np.sum(x),)
-
-    # def recursive(i):
-    #     ga = GeneticAlgorithm(random_state=i)
-    #     ga.optimize(objective, vmins=[-1, -1, -1], vmaxs=[1, 1, 1])
-
-    # Parallel(n_jobs=-1)([delayed(recursive)(i) for i in range(10)])
-    # recursive(1)
-
     n_gen = 100
     popsize = 100
     sampler = GeneticAlgorithmSampler(
