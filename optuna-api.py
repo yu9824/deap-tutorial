@@ -13,11 +13,10 @@ import optuna
 
 
 # TODO
-# Trialを世代と考えて、ひとつ前の世代のpopulationを取り出して交叉、突然変異を行う
-# studyにpopulation, fitnessを持たせる（trial.set_user_attr?）
-# Individual classは同様に定義。
-# すでに計算されている個体も存在するはず。これを再計算させるかはひとつの問題。
-# 再計算させる場合は、population区切りで必ず世代がわかるなどわかりやすいが、計算資源的に無駄が多い。
+# すでに計算されている個体も存在するはずだがすべて再計算してしまっている（計算のロスが多い）
+# [ ]: attrで世代を保存しておく`Dict[str, List[int]]`?
+
+# FIXME: n_jobs = 1でないと正しく計算できない
 
 
 class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
@@ -87,7 +86,6 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
                         )
                     )
 
-            # FIXME: paramsだけ先に取り出す？→同じものであったとしても再計算したほうがわかりやすそう。
             # 偶数と奇数のペアで、一定の確率で交配 (crossover)
             for child1, child2 in zip(
                 self._offspring[::2], self._offspring[1::2]
@@ -144,9 +142,6 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
         if isinstance(
             param_distribution, optuna.distributions.UniformDistribution
         ):
-            # from pdb import set_trace
-
-            # set_trace()
             generation = trial.user_attrs["generation"]
             if generation == 0:
                 return self._rng.uniform(
