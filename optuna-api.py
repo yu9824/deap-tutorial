@@ -153,9 +153,7 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
                     param_distribution.low, param_distribution.high
                 )
             else:
-                from pdb import set_trace
-
-                set_trace()
+                raise NotImplementedError
         else:
             raise NotImplementedError
 
