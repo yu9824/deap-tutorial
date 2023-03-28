@@ -154,6 +154,27 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
         else:
             raise NotImplementedError
 
+    @staticmethod
+    def early_stop(
+        study: optuna.study.Study, trial: optuna.trial.FrozenTrial
+    ) -> None:
+        if (
+            study.sampler._n_trials_completed % study.sampler.popsize == 0
+            and study.sampler._n_trials_completed > 0
+        ):
+            if (
+                len(
+                    {
+                        _trial.value
+                        for _trial in study.sampler._trials_completed[
+                            -study.sampler.popsize:
+                        ]
+                    }
+                )
+                < 0.1 * study.sampler.popsize
+            ):
+                study.stop()
+
 
 def objective(trial: optuna.trial.Trial) -> float:
     x = trial.suggest_uniform("x", -10, 10)
@@ -168,4 +189,6 @@ if __name__ == "__main__":
         seed=334, n_gen=n_gen, popsize=popsize, cxpb=0.5, mutpb=0.2
     )
     study = optuna.create_study(sampler=sampler, direction="minimize")
-    study.optimize(objective, n_trials=n_gen * popsize)
+    study.optimize(
+        objective, n_trials=n_gen * popsize, callbacks=[sampler.early_stop]
+    )
