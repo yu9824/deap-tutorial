@@ -21,6 +21,8 @@ import optuna
 
 # FIXME: n_jobs = 1でないと正しく計算できない
 
+# FIXME: populationのパラメータがあまりにも同じになったら早期終了する
+
 
 class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
     def __init__(
