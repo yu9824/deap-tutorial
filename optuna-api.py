@@ -15,6 +15,9 @@ import optuna
 # TODO
 # すでに計算されている個体も存在するはずだがすべて再計算してしまっている（計算のロスが多い）
 # [ ]: attrで世代を保存しておく`Dict[str, List[int]]`?
+# [ ]: stateをwaitingなどに変更して、get_trialsで
+# completeなものはattrのgenerationに加えるだけでよく、
+# waitingのものはパラメータで返すようにすると計算量が削減できそう。
 
 # FIXME: n_jobs = 1でないと正しく計算できない
 
@@ -55,10 +58,6 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
         trial: optuna.trial.FrozenTrial,
         search_space: optuna.distributions.BaseDistribution,
     ) -> Dict[str, Any]:
-        # FIXME: stateをwaitingなどに変更して、get_trialsで
-        # completeなものはattrのgenerationに加えるだけでよく、
-        # waitingのものはパラメータで返すようにすると計算量が削減できそう。
-
         # 世代が変わる瞬間
         if (
             self._n_trials_completed % self.popsize == 0
@@ -132,6 +131,7 @@ class GeneticAlgorithmSampler(optuna.samplers.BaseSampler):
         else:
             return {}
 
+    # TODO: 他の分布（対数くらいは）対応する
     def sample_independent(
         self,
         study: optuna.study.Study,
