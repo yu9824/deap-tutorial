@@ -21,12 +21,11 @@ class Individual(list):
         self._fitness = None
 
     @property
-    def fitness(self) -> Optional[Tuple[float]]:
-        return (
-            self._fitness
-            if self._fitness is None
-            else self.sign * self._fitness
-        )
+    def fitness(self) -> Optional[float]:
+        if self._fitness is None:
+            return None
+        else:
+            return self.sign * self._fitness
 
     @fitness.setter
     def fitness(self, value):
@@ -67,7 +66,7 @@ class GeneticAlgorithm:
 
     def optimize(
         self,
-        objective: Callable[[np.ndarray], Tuple[float]],
+        objective: Callable[[list], float],
         vmins,
         vmaxs,
         n_gen: int = 100,
@@ -77,9 +76,9 @@ class GeneticAlgorithm:
     ):
 
         if self.direction == "maximize":
-            sign = 1
-        elif self.direction == "minimize":
             sign = -1
+        elif self.direction == "minimize":
+            sign = 1
         else:
             raise ValueError("direction must be maximize or minimize")
 
@@ -91,7 +90,7 @@ class GeneticAlgorithm:
             for _ in range(popsize)
         ]
 
-        _fitnesses: Generator[Tuple[float]] = map(objective, population)
+        _fitnesses: Generator[float] = map(objective, population)
         for ind, fit in zip(population, _fitnesses):
             ind.fitness = fit
 
@@ -103,7 +102,10 @@ class GeneticAlgorithm:
             _time_start = datetime.now()
 
             offspring = self.selTournament(
-                individuals=population, k=popsize, tournsize=3
+                individuals=population,
+                k=popsize,
+                tournsize=3,
+                random_state=self.rng_,
             )
             offspring = list(map(deepcopy, offspring))
             # 偶数と奇数のペアで、一定の確率で交配
@@ -116,18 +118,18 @@ class GeneticAlgorithm:
             for mutant in offspring:
                 if self.rng_.random() < mutpb:
                     # オブジェクトをそのまま変えている
-                    self.mutFlipBit(mutant, indpb=0.05)
+                    self.mutFlipBit(mutant, indpb=0.05, random_state=self.rng_)
                     mutant.fitness = None
 
             invalid_ind = [ind for ind in offspring if not ind.fitness]
             # del してたものを再度評価し直す（突然変異or交叉をしているため）
-            _fitnesses: Generator[Tuple[float]] = map(objective, invalid_ind)
+            _fitnesses: Generator[float] = map(objective, invalid_ind)
             for ind, fit in zip(invalid_ind, _fitnesses):
                 ind.fitness = fit
 
             # populationを更新
             population[:] = offspring
-            fitnesses = [ind.fitness[0] for ind in population]
+            fitnesses = [ind.fitness * ind.sign for ind in population]
             self.__fitnesses.append(fitnesses)
             # 保存するならば、各世代のpopulationとfitness。
 
@@ -200,7 +202,7 @@ class GeneticAlgorithm:
 
         size = min(len(ind1), len(ind2))
         cxpoint1 = rng_.randint(1, size)
-        cxpoint2 = rng_.randint(1, size - 1)
+        cxpoint2 = rng_.randint(1, size - 1) if size - 1 > 1 else 1
         if cxpoint2 >= cxpoint1:
             cxpoint2 += 1
         else:  # Swap the two cx points
@@ -293,12 +295,14 @@ class GeneticAlgorithm:
 
 if __name__ == "__main__":
 
-    def objective(x):
-        return (np.sum(x),)
+    def objective(x: List[float]) -> float:
+        return (x[0] - 2) ** 2 + (x[1] + 5) ** 2
 
     def recursive(i):
-        ga = GeneticAlgorithm(random_state=i)
-        ga.optimize(objective, vmins=[-1, -1, -1], vmaxs=[1, 1, 1])
+        ga = GeneticAlgorithm(random_state=i, direction="maximize")
+        # ga.optimize(objective, vmins=[-1, -1, -1], vmaxs=[1, 1, 1])
+        ga.optimize(objective, vmins=[-10, -10], vmaxs=[10, 10])
+        print(np.array(ga.fitnesses).min(axis=None))
 
-    Parallel(n_jobs=-1)([delayed(recursive)(i) for i in range(10)])
-    # recursive(1)
+    # Parallel(n_jobs=-1)([delayed(recursive)(i) for i in range(10)])
+    recursive(1)
